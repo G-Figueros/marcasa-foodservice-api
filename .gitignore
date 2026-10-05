@@ -1,0 +1,10 @@
+# Archivos generados por .NET y Visual Studio
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+**/*.suo
+
+# Configuración y secretos locales
+**/appsettings.Local.json
+**/appsettings.Production.json

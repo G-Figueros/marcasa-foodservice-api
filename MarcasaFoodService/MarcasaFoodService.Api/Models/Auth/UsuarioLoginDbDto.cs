@@ -23,6 +23,7 @@
         public string PasswordSalt { get; set; } = string.Empty;
 
         public bool DebeCambiarPassword { get; set; }
+        public int VersionCredenciales { get; set; }
 
         public bool Activo { get; set; }
 

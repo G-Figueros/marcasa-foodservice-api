@@ -1,4 +1,3 @@
-﻿using System.Security.Cryptography;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -44,7 +43,7 @@ namespace MarcasaFoodService.Api.Services.Auth
                 return CredencialesInvalidas();
             }
 
-            bool passwordValido = ValidarPasswordSqlServer(
+            bool passwordValido = PasswordHasher.Verify(
                 password,
                 usuarioDb.PasswordSalt,
                 usuarioDb.PasswordHash
@@ -114,32 +113,23 @@ namespace MarcasaFoodService.Api.Services.Auth
             );
         }
 
-        private static bool ValidarPasswordSqlServer(string passwordIngresado, string salt, string hashGuardado)
+        public async Task<ApiResponse<object>> CambiarPasswordAsync(int usuarioId, string nombreUsuario, CambiarPasswordRequestDto request)
         {
-            string hashCalculado = GenerarHashSha256CompatibleSqlServer(passwordIngresado, salt);
-
-            try
-            {
-                return CryptographicOperations.FixedTimeEquals(
-                    Convert.FromHexString(hashCalculado), Convert.FromHexString(hashGuardado));
-            }
-            catch (FormatException)
-            {
-                return false;
-            }
-        }
-
-        private static string GenerarHashSha256CompatibleSqlServer(string password, string salt)
-        {
-            /*
-             * SQL Server HASHBYTES sobre NVARCHAR trabaja con bytes Unicode.
-             * Por eso usamos Encoding.Unicode para que el hash coincida
-             * con el valor generado en el script SQL inicial.
-             */
-            byte[] bytes = Encoding.Unicode.GetBytes(password + salt);
-            byte[] hash = SHA256.HashData(bytes);
-
-            return Convert.ToHexString(hash);
+            ApiResponse<object> Error(string message) => new() { Success = false, Message = message };
+            var user = await _authRepository.ObtenerUsuarioLoginAsync(nombreUsuario);
+            if (user is null || user.UsuarioId != usuarioId || !PasswordHasher.Verify(request.PasswordActual, user.PasswordSalt, user.PasswordHash))
+                return Error("La contraseña actual es incorrecta.");
+            if (request.PasswordNuevo != request.Confirmacion)
+                return Error("La confirmación no coincide.");
+            if (request.PasswordNuevo.Length < 12 || request.PasswordNuevo.Length > 100 ||
+                !request.PasswordNuevo.Any(char.IsLetter) || !request.PasswordNuevo.Any(char.IsDigit) ||
+                !request.PasswordNuevo.Any(c => !char.IsLetterOrDigit(c)))
+                return Error("La nueva contraseña debe tener entre 12 y 100 caracteres, letras, números y símbolos.");
+            if (request.PasswordNuevo == "Temporal2026*" || PasswordHasher.Verify(request.PasswordNuevo, user.PasswordSalt, user.PasswordHash))
+                return Error("Elegí una contraseña distinta de la actual y de la temporal.");
+            var (hash, salt) = PasswordHasher.Hash(request.PasswordNuevo);
+            await _authRepository.CambiarPasswordPropiaAsync(usuarioId, user.VersionCredenciales, hash, salt);
+            return new ApiResponse<object> { Success = true, Message = "Contraseña actualizada. Iniciá sesión nuevamente." };
         }
 
         private string CrearToken(UsuarioLoginDbDto usuario, IEnumerable<PermisoUsuarioDto> permisos)
@@ -149,7 +139,10 @@ namespace MarcasaFoodService.Api.Services.Auth
                 new(JwtRegisteredClaimNames.Sub, usuario.UsuarioId.ToString()),
                 new(ClaimTypes.NameIdentifier, usuario.UsuarioId.ToString()),
                 new(ClaimTypes.Name, usuario.NombreUsuario),
-                new("role_id", usuario.RolId.ToString())
+                new(ClaimTypes.Role, usuario.NombreRol),
+                new("role_id", usuario.RolId.ToString()),
+                new("credential_version", usuario.VersionCredenciales.ToString()),
+                new("password_change_required", usuario.DebeCambiarPassword ? "true" : "false")
             };
             claims.AddRange(permisos.Where(p => p.Habilitado)
                 .Select(p => new Claim("permission", p.Codigo)));

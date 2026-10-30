@@ -17,11 +17,18 @@ public static class Permissions
     public const string AprobarCancelacion = "APROBAR_CANCELACION_PEDIDOS";
     public const string ExportarPdfRuta = "EXPORTAR_PDF_RUTA";
     public const string ConfirmarEntrega = "CONFIRMAR_ENTREGA";
+    public const string VerUsuarios = "VER_USUARIOS";
+    public const string CrearUsuarios = "CREAR_USUARIOS";
+    public const string EditarUsuarios = "EDITAR_USUARIOS";
+    public const string VerRoles = "VER_ROLES";
+    public const string CrearRoles = "CREAR_ROLES";
+    public const string EditarRoles = "EDITAR_ROLES";
 
     public static readonly string[] All =
     [
         VerClientes, VerProductos, VerInventario, CrearPedidos, VerPendientes,
         VerAutorizados, VerPendientesEntrega, AutorizarPedidos, DevolverPedidos,
-        SolicitarCancelacion, AprobarCancelacion, ExportarPdfRuta, ConfirmarEntrega
+        SolicitarCancelacion, AprobarCancelacion, ExportarPdfRuta, ConfirmarEntrega,
+        VerUsuarios, CrearUsuarios, EditarUsuarios, VerRoles, CrearRoles, EditarRoles
     ];
 }

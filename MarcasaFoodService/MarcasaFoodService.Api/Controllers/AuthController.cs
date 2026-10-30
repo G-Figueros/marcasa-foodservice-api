@@ -2,6 +2,8 @@
 using MarcasaFoodService.Api.Models.Common;
 using MarcasaFoodService.Api.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace MarcasaFoodService.Api.Controllers
 {
@@ -39,6 +41,15 @@ namespace MarcasaFoodService.Api.Controllers
             }
 
             return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> CambiarPassword([FromBody] CambiarPasswordRequestDto request)
+        {
+            var id = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var response = await _authService.CambiarPasswordAsync(id, User.Identity!.Name!, request);
+            return response.Success ? Ok(response) : BadRequest(response);
         }
     }
 }

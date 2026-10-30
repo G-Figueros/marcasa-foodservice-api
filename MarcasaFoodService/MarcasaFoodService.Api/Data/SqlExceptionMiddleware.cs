@@ -13,12 +13,12 @@ public sealed class SqlExceptionMiddleware(RequestDelegate next, ILogger<SqlExce
         {
             await next(context);
         }
-        catch (SqlException error) when (error.Number >= 50000 && error.Number < 56000)
+        catch (SqlException error) when (error.Number >= 50000 && error.Number < 58000)
         {
             context.Response.StatusCode = error.Number switch
             {
-                50003 or 51001 or 52001 or 53001 or 54001 or 55001 => StatusCodes.Status403Forbidden,
-                50004 or 51002 or 55004 => StatusCodes.Status404NotFound,
+                50003 or 51001 or 52001 or 53001 or 54001 or 55001 or 56001 or 57001 => StatusCodes.Status403Forbidden,
+                50004 or 51002 or 55004 or 56004 or 57004 => StatusCodes.Status404NotFound,
                 50005 or 50006 or 50007 or 50008 or 51005 or 51006 or 51007 => StatusCodes.Status400BadRequest,
                 _ => StatusCodes.Status409Conflict
             };

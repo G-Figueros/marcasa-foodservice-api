@@ -9,6 +9,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MarcasaFoodService.Api.Models.Common;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using MarcasaFoodService.Api.Repositories.Users;
+using MarcasaFoodService.Api.Services.Users;
+using MarcasaFoodService.Api.Repositories.Roles;
+using MarcasaFoodService.Api.Services.Roles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +76,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var user = context.Principal;
+                if (!int.TryParse(user?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ||
+                    !int.TryParse(user.FindFirstValue("credential_version"), out var version) ||
+                    !int.TryParse(user.FindFirstValue("role_id"), out var rolId))
+                {
+                    context.Fail("Token incompleto.");
+                    return;
+                }
+                var repo = context.HttpContext.RequestServices.GetRequiredService<IAuthRepository>();
+                var estado = await repo.ObtenerEstadoSesionAsync(id);
+                if (estado is null || !estado.Activo || estado.VersionCredenciales != version ||
+                    estado.RolId != rolId || estado.DebeCambiarPassword != user.HasClaim("password_change_required", "true"))
+                    context.Fail("La sesión ya no está vigente.");
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -87,6 +111,10 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<ISqlConnectionFactory, SqlConnectionFactory>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUsuariosRepository, UsuariosRepository>();
+builder.Services.AddScoped<IUsuariosService, UsuariosService>();
+builder.Services.AddScoped<IRolesRepository, RolesRepository>();
+builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<IOperationsRepository, OperationsRepository>();
 builder.Services.AddScoped<IOperationsService, OperationsService>();
 
@@ -107,6 +135,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 app.UseCors("AngularApp");
 app.UseAuthentication();
+app.UseMiddleware<RequirePasswordChangeMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

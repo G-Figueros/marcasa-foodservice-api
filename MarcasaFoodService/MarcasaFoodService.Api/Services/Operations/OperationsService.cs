@@ -52,6 +52,8 @@ public sealed class OperationsService(IOperationsRepository repository) : IOpera
 
     public Task<EstadoPedidoResultadoDto> AutorizarAsync(long id, AutorizarPedidoRequest request, int usuarioId, CancellationToken ct)
     {
+        if (request.DetalleAutorizacion.Count == 0 || request.DetalleAutorizacion.Any(x => !x.MarcadoOK))
+            throw new ValidationException("Debés confirmar todos los productos antes de autorizar.");
         if (request.DetalleAutorizacion.Select(x => x.PedidoDetalleId).Distinct().Count() != request.DetalleAutorizacion.Count)
             throw new ValidationException("No repita detalles de autorización.");
         return repository.AutorizarAsync(id, request, usuarioId, ct);

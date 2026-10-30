@@ -6,5 +6,6 @@ namespace MarcasaFoodService.Api.Services.Auth
     public interface IAuthService
     {
         Task<ApiResponse<LoginResponseDto>> LoginAsync(LoginRequestDto request);
+        Task<ApiResponse<object>> CambiarPasswordAsync(int usuarioId, string nombreUsuario, CambiarPasswordRequestDto request);
     }
 }

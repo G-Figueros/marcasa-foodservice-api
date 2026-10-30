@@ -57,5 +57,20 @@ namespace MarcasaFoodService.Api.Repositories.Auth
                 commandType: CommandType.StoredProcedure
             );
         }
+
+        public async Task<EstadoSesionDbDto?> ObtenerEstadoSesionAsync(int usuarioId)
+        {
+            await using var connection = _connectionFactory.CreateConnection();
+            return await connection.QueryFirstOrDefaultAsync<EstadoSesionDbDto>(
+                "dbo.usp_ObtenerEstadoSesion", new { UsuarioId = usuarioId }, commandType: CommandType.StoredProcedure);
+        }
+
+        public async Task CambiarPasswordPropiaAsync(int usuarioId, int version, string hash, string salt)
+        {
+            await using var connection = _connectionFactory.CreateConnection();
+            await connection.ExecuteAsync("dbo.usp_CambiarPasswordPropia",
+                new { UsuarioId = usuarioId, VersionCredenciales = version, PasswordHash = hash, PasswordSalt = salt },
+                commandType: CommandType.StoredProcedure);
+        }
     }
 }

@@ -6,6 +6,9 @@ namespace MarcasaFoodService.Api.Services.Users;
 
 public sealed class UsuariosService(IUsuariosRepository repository) : IUsuariosService
 {
+    public Task<CuentaDto?> CuentaAsync(int usuarioId) => repository.CuentaAsync(usuarioId);
+    public Task<CuentaDto?> ActualizarCuentaAsync(int usuarioId, ActualizarCuentaDto data) =>
+        repository.ActualizarCuentaAsync(usuarioId, data);
     public const string PasswordTemporal = "Temporal2026*";
     public Task<List<UsuarioAdminDto>> ListarAsync(int actorId) => repository.ListarAsync(actorId);
     public Task<List<RolUsuarioDto>> RolesAsync(int actorId) => repository.RolesAsync(actorId);

@@ -5,7 +5,12 @@ namespace MarcasaFoodService.Api.Repositories.Operations;
 public interface IOperationsRepository
 {
     Task<IReadOnlyList<ClienteDto>> ListarClientesAsync(string? texto, bool soloActivos, CancellationToken ct);
+    Task<int> GuardarClienteAsync(int? clienteId, GuardarClienteRequest request, int actorId, CancellationToken ct);
+    Task CambiarEstadoClienteAsync(int clienteId, bool activo, int actorId, CancellationToken ct);
     Task<IReadOnlyList<ProductoDto>> ListarProductosAsync(string? texto, bool soloActivos, CancellationToken ct);
+    Task<int> GuardarProductoAsync(int? productoId, GuardarProductoRequest request, int actorId, CancellationToken ct);
+    Task CambiarEstadoProductoAsync(int productoId, bool activo, int actorId, CancellationToken ct);
+    Task AjustarInventarioAsync(int inventarioId, AjustarInventarioRequest request, int actorId, CancellationToken ct);
     Task<IReadOnlyList<InventarioDto>> ListarInventarioAsync(string? texto, bool soloActivos, CancellationToken ct);
     Task<IReadOnlyList<PedidoResumenDto>> PendientesAutorizacionAsync(PedidoFiltro filtro, CancellationToken ct);
     Task<IReadOnlyList<PedidoResumenDto>> AutorizadosRutaAsync(PedidoFiltro filtro, CancellationToken ct);

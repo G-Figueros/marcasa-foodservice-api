@@ -8,6 +8,23 @@ namespace MarcasaFoodService.Api.Repositories.Users;
 // Toda escritura pasa por los procedimientos de la base y recibe el actor del JWT.
 public sealed class UsuariosRepository(ISqlConnectionFactory factory) : IUsuariosRepository
 {
+    public async Task<CuentaDto?> CuentaAsync(int usuarioId)
+    {
+        await using var db = factory.CreateConnection();
+        return await db.QuerySingleOrDefaultAsync<CuentaDto>("dbo.usp_ObtenerCuenta",
+            new { UsuarioId = usuarioId }, commandType: CommandType.StoredProcedure);
+    }
+
+    public async Task<CuentaDto?> ActualizarCuentaAsync(int usuarioId, ActualizarCuentaDto data)
+    {
+        await using var db = factory.CreateConnection();
+        return await db.QuerySingleOrDefaultAsync<CuentaDto>("dbo.usp_ActualizarCuenta",
+            new { UsuarioId = usuarioId, Nombres = data.Nombres.Trim(),
+                Apellidos = string.IsNullOrWhiteSpace(data.Apellidos) ? null : data.Apellidos.Trim(),
+                Correo = string.IsNullOrWhiteSpace(data.Correo) ? null : data.Correo.Trim(),
+                Telefono = string.IsNullOrWhiteSpace(data.Telefono) ? null : data.Telefono.Trim() },
+            commandType: CommandType.StoredProcedure);
+    }
     public async Task<List<UsuarioAdminDto>> ListarAsync(int actorId)
     {
         await using var db = factory.CreateConnection();

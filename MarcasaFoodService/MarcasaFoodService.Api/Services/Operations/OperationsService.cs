@@ -10,8 +10,37 @@ public sealed class OperationsService(IOperationsRepository repository) : IOpera
     public Task<IReadOnlyList<ClienteDto>> ClientesAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         repository.ListarClientesAsync(Limpiar(texto), soloActivos, ct);
 
+    public Task<int> GuardarClienteAsync(int? clienteId, GuardarClienteRequest request, int actorId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.CodigoCliente) || string.IsNullOrWhiteSpace(request.NombreComercial))
+            throw new ValidationException("El código y el nombre comercial son obligatorios.");
+        return repository.GuardarClienteAsync(clienteId, request, actorId, ct);
+    }
+
+    public Task CambiarEstadoClienteAsync(int clienteId, bool activo, int actorId, CancellationToken ct) =>
+        repository.CambiarEstadoClienteAsync(clienteId, activo, actorId, ct);
+
     public Task<IReadOnlyList<ProductoDto>> ProductosAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         repository.ListarProductosAsync(Limpiar(texto), soloActivos, ct);
+
+    public Task<int> GuardarProductoAsync(int? productoId, GuardarProductoRequest request, int actorId, CancellationToken ct)
+    {
+        if (!request.PermitePesoNeto && !request.PermitePesoBruto)
+            throw new ValidationException("Seleccioná al menos un tipo de peso.");
+        if (string.IsNullOrWhiteSpace(request.CodigoProducto) || string.IsNullOrWhiteSpace(request.Nombre))
+            throw new ValidationException("El código y el nombre son obligatorios.");
+        return repository.GuardarProductoAsync(productoId, request, actorId, ct);
+    }
+
+    public Task CambiarEstadoProductoAsync(int productoId, bool activo, int actorId, CancellationToken ct) =>
+        repository.CambiarEstadoProductoAsync(productoId, activo, actorId, ct);
+
+    public Task AjustarInventarioAsync(int inventarioId, AjustarInventarioRequest request, int actorId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.Observacion) || request.Observacion.Trim().Length < 5)
+            throw new ValidationException("Indicá un motivo de al menos 5 caracteres para el ajuste.");
+        return repository.AjustarInventarioAsync(inventarioId, request, actorId, ct);
+    }
 
     public Task<IReadOnlyList<InventarioDto>> InventarioAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         repository.ListarInventarioAsync(Limpiar(texto), soloActivos, ct);

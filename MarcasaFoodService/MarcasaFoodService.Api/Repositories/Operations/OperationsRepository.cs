@@ -11,8 +11,42 @@ public sealed class OperationsRepository(ISqlConnectionFactory connections) : IO
     public Task<IReadOnlyList<ClienteDto>> ListarClientesAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         QueryAsync<ClienteDto>("dbo.usp_ListarClientes", new { TextoBusqueda = texto, SoloActivos = soloActivos }, ct);
 
+    public Task<int> GuardarClienteAsync(int? clienteId, GuardarClienteRequest request, int actorId, CancellationToken ct) =>
+        SingleAsync<int>("dbo.usp_GuardarCliente", new { ClienteId = clienteId, ActorId = actorId,
+            CodigoCliente = request.CodigoCliente.Trim(), NombreComercial = request.NombreComercial.Trim(),
+            RazonSocial = Limpiar(request.RazonSocial), NIT = Limpiar(request.NIT),
+            Contacto = Limpiar(request.Contacto), Telefono = Limpiar(request.Telefono),
+            Direccion = Limpiar(request.Direccion), Observaciones = Limpiar(request.Observaciones) }, ct);
+
+    public async Task CambiarEstadoClienteAsync(int clienteId, bool activo, int actorId, CancellationToken ct)
+    {
+        await SingleAsync<int>("dbo.usp_CambiarEstadoCliente", new { ClienteId = clienteId, ActorId = actorId,
+            Activo = activo }, ct);
+    }
+
+    private static string? Limpiar(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     public Task<IReadOnlyList<ProductoDto>> ListarProductosAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         QueryAsync<ProductoDto>("dbo.usp_ListarProductos", new { TextoBusqueda = texto, SoloActivos = soloActivos }, ct);
+
+    public Task<int> GuardarProductoAsync(int? productoId, GuardarProductoRequest request, int actorId, CancellationToken ct) =>
+        SingleAsync<int>("dbo.usp_GuardarProducto", new { ProductoId = productoId, ActorId = actorId,
+            CodigoProducto = request.CodigoProducto.Trim(), Nombre = request.Nombre.Trim(),
+            request.PermitePesoNeto, request.PermitePesoBruto, request.PesoNetoBolsaLbs,
+            request.PesoBrutoBolsaLbs, request.SePesaAlDespachar }, ct);
+
+    public async Task CambiarEstadoProductoAsync(int productoId, bool activo, int actorId, CancellationToken ct)
+    {
+        await SingleAsync<int>("dbo.usp_CambiarEstadoProducto", new { ProductoId = productoId, ActorId = actorId,
+            Activo = activo }, ct);
+    }
+
+    public async Task AjustarInventarioAsync(int inventarioId, AjustarInventarioRequest request, int actorId, CancellationToken ct)
+    {
+        await SingleAsync<int>("dbo.usp_AjustarInventario", new { InventarioId = inventarioId, ActorId = actorId,
+            request.StockDisponibleLbs, request.CantidadBolsasDisponible,
+            Observacion = request.Observacion.Trim() }, ct);
+    }
 
     public Task<IReadOnlyList<InventarioDto>> ListarInventarioAsync(string? texto, bool soloActivos, CancellationToken ct) =>
         QueryAsync<InventarioDto>("dbo.usp_ListarInventario", new { TextoBusqueda = texto, SoloActivos = soloActivos }, ct);

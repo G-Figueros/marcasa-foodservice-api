@@ -118,9 +118,10 @@ builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<IOperationsRepository, OperationsRepository>();
 builder.Services.AddScoped<IOperationsService, OperationsService>();
 
+var corsOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+    ?? (builder.Environment.IsDevelopment() ? ["http://localhost:4200"] : []);
 builder.Services.AddCors(options => options.AddPolicy("AngularApp", policy => policy
-    .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-        ?? ["http://localhost:4200"])
+    .WithOrigins(corsOrigins)
     .AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
@@ -133,11 +134,47 @@ if (app.Environment.IsDevelopment())
 app.UseMiddleware<SqlExceptionMiddleware>();
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
+// En Azure, Angular compilado se sirve desde wwwroot junto con el API.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors("AngularApp");
 app.UseAuthentication();
 app.UseMiddleware<RequirePasswordChangeMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
+// Comprueba la conectividad sin exponer detalles de la base al navegador.
+app.MapGet("/health/ready", async (ISqlConnectionFactory connections) =>
+{
+    try
+    {
+        await using var connection = connections.CreateConnection();
+        await connection.OpenAsync();
+        return Results.Ok(new { status = "ready" });
+    }
+    catch
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+});
+// Las rutas de Angular cargan index.html; las rutas API desconocidas conservan 404.
+app.MapFallback(async context =>
+{
+    if (context.Request.Path.StartsWithSegments("/api") || Path.HasExtension(context.Request.Path))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var indexPath = Path.Combine(app.Environment.WebRootPath ?? "", "index.html");
+    if (!File.Exists(indexPath))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(indexPath);
+});
 app.Run();
 
 public partial class Program;

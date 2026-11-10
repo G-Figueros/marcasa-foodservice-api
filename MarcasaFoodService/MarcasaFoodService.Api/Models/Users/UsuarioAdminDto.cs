@@ -41,3 +41,22 @@ public sealed class EstadoUsuarioDto
 {
     public bool Activo { get; set; }
 }
+
+public sealed class CuentaDto
+{
+    public int UsuarioId { get; set; }
+    public string NombreUsuario { get; set; } = "";
+    public string Nombres { get; set; } = "";
+    public string? Apellidos { get; set; }
+    public string? Correo { get; set; }
+    public string? Telefono { get; set; }
+    public string NombreRol { get; set; } = "";
+}
+
+public sealed class ActualizarCuentaDto
+{
+    [Required, StringLength(120, MinimumLength = 2)] public string Nombres { get; set; } = "";
+    [StringLength(120)] public string? Apellidos { get; set; }
+    [EmailAddress, StringLength(150)] public string? Correo { get; set; }
+    [StringLength(25)] public string? Telefono { get; set; }
+}

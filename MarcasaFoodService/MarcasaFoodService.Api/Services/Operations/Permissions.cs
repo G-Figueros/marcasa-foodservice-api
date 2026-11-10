@@ -5,7 +5,11 @@ public static class Permissions
 {
     public const string VerPedido = "VER_PEDIDO";
     public const string VerClientes = "VER_CLIENTES";
+    public const string CrearClientes = "CREAR_CLIENTES";
+    public const string EditarClientes = "EDITAR_CLIENTES";
     public const string VerProductos = "VER_PRODUCTOS";
+    public const string EditarProductos = "EDITAR_PRODUCTOS";
+    public const string AgregarStock = "AGREGAR_STOCK";
     public const string VerInventario = "VER_INVENTARIO";
     public const string CrearPedidos = "CREAR_PEDIDOS";
     public const string VerPendientes = "VER_PEDIDOS_PENDIENTES";
@@ -26,7 +30,8 @@ public static class Permissions
 
     public static readonly string[] All =
     [
-        VerClientes, VerProductos, VerInventario, CrearPedidos, VerPendientes,
+        VerClientes, CrearClientes, EditarClientes, VerProductos, EditarProductos,
+        VerInventario, AgregarStock, CrearPedidos, VerPendientes,
         VerAutorizados, VerPendientesEntrega, AutorizarPedidos, DevolverPedidos,
         SolicitarCancelacion, AprobarCancelacion, ExportarPdfRuta, ConfirmarEntrega,
         VerUsuarios, CrearUsuarios, EditarUsuarios, VerRoles, CrearRoles, EditarRoles
